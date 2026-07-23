@@ -92,7 +92,8 @@ echo "Building Amneshia..."
 cd "${PROJECTS_DIR}/Amneshia"
 npm install
 npm run build
-npm install -g . --prefix "${HOME}/.local" || npm link || echo -e "${RED}Non-critical warning: npm global install / link failed. Path mapping in mcp_config.json will resolve it directly.${NC}"
+# Install globally with --ignore-scripts to prevent re-triggering prepare hook
+npm install -g . --ignore-scripts 2>&1 || echo -e "${RED}Non-critical warning: npm global install failed for Amneshia. mcp_config.json will use direct node path.${NC}"
 cd -
 
 # Clone/Build Seiza
@@ -106,13 +107,15 @@ fi
 echo "Building Seiza..."
 cd "${PROJECTS_DIR}/Seiza"
 npm install
+# Build main server
 npm run build
-# Some versions of Seiza might require build:all if dashboard is present
-if npm run | grep -q "build:all"; then
+# Build dashboard if script exists
+if npm run 2>/dev/null | grep -q "build:all"; then
     echo "Building Seiza dashboard..."
     npm run build:all
 fi
-npm install -g . --prefix "${HOME}/.local" || npm link || echo -e "${RED}Non-critical warning: npm global install / link failed. Path mapping in mcp_config.json will resolve it directly.${NC}"
+# Install globally with --ignore-scripts to prevent re-triggering prepare/build hook
+npm install -g . --ignore-scripts 2>&1 || echo -e "${RED}Non-critical warning: npm global install failed for Seiza. mcp_config.json will use direct node path.${NC}"
 cd -
 
 # 4. Copy Rules & Directives
