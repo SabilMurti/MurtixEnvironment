@@ -1,128 +1,158 @@
-# 🧠 MurtixEnvironment - Shareable WSL Agentic Developer Workspace
+# 🧠 MurtixEnvironment
 
-Selamat datang di **MurtixEnvironment**! Repositori ini berisi konfigurasi, rules, templates, dan automasi installer untuk mereplikasi environment pemrograman berbasis AI agent yang canggih (agentic workflow) milik **Rudie Sabilillah Azwan Murti (Murtix)** di WSL2 / Ubuntu.
+A shareable, reproducible WSL2 agentic developer workspace. Clone this repo and let your AI coding agent configure everything automatically — or run the installer manually.
 
-Environment ini membagi proses development menjadi dua lapisan: **Planning & Orchestration** (dilakukan oleh Antigravity IDE atau Oh My Pi) dan **Parallel Execution** (dilakukan oleh Seiza Sub-agents). Semua agent terhubung ke satu memori jangka panjang terpadu (**Amneshia**) dan didukung oleh penemuan codebase berbasis graf (**codebase-memory-mcp**).
+This environment splits the development process into two layers: **Planning & Orchestration** (handled by your IDE agent — Antigravity IDE, Cursor, Claude Code, etc.) and **Parallel Execution** (handled by Seiza sub-agents). All agents share a unified long-term memory ([Amneshia](https://github.com/SabilMurti/Amneshia)) and a graph-based codebase index ([codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp)).
 
 ---
 
-## 🏛️ Arsitektur & Alur Kerja (Workflow)
+## Architecture
 
-Environment ini mendukung dua jenis alur kerja utama:
-
-```mermaid
-graph TD
-    subgraph Planning & Orchestration
-        AG[Antigravity IDE] -- OR -- OMP[Oh My Pi Orchestrator]
-    end
-
-    subgraph Memory & Context
-        AM[Amneshia Memory Hub]
-        CM[Codebase Memory MCP]
-        C7[Context7 Official Docs]
-    end
-
-    subgraph Parallel Execution
-        SZ[Seiza sub-agent task runner]
-        SZ_C[Coder Subagent]
-        SZ_R[Reviewer Subagent]
-        SZ_P[Planner Subagent]
-    end
-
-    AG -->|run_seiza_task| SZ
-    OMP -->|run_seiza_task| SZ
-    SZ --> SZ_C
-    SZ --> SZ_R
-    SZ --> SZ_P
-
-    SZ_C -.->|Query Context| AM
-    SZ_C -.->|Query Code Structure| CM
-    SZ_C -.->|Query Library API| C7
+```
+┌──────────────────────────────────────────────────────────────┐
+│                    PLANNING LAYER                            │
+│                                                              │
+│   Antigravity IDE  ·  Cursor  ·  Claude Code  ·  OMP (CLI)  │
+│          ↓ run_seiza_task / run_single_agent                 │
+├──────────────────────────────────────────────────────────────┤
+│                   EXECUTION LAYER                            │
+│                                                              │
+│   ┌──────────────────────────────────────────────────────┐   │
+│   │                  Seiza Orchestrator                   │   │
+│   │   ┌─────────┐ ┌──────────┐ ┌─────────┐ ┌─────────┐  │   │
+│   │   │  Coder  │ │ Reviewer │ │ Planner │ │ Tester  │  │   │
+│   │   └────┬────┘ └────┬─────┘ └────┬────┘ └────┬────┘  │   │
+│   └────────┼───────────┼────────────┼───────────┼────────┘   │
+│            │           │            │           │            │
+├────────────┼───────────┼────────────┼───────────┼────────────┤
+│                   MEMORY & CONTEXT LAYER                     │
+│                                                              │
+│   Amneshia          codebase-memory-mcp       Context7       │
+│   (Long-term        (Tree-Sitter code         (Live library  │
+│    memory graph)     knowledge graph)          documentation) │
+│                                                              │
+│                      9router                                 │
+│                 (Free model fallback)                         │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-### 1. Antigravity IDE + Seiza Sub-Agent (Project Manager & Sub-Agent)
-*   **Peran Antigravity IDE:** Bertindak sebagai Project Manager di sisi Windows/IDE. Antigravity melakukan pemahaman tingkat tinggi, menganalisis permintaan user, memformulasikan rencana implementasi (`implementation_plan.md`), dan mengumpulkan persetujuan Anda.
-*   **Peran Seiza:** Begitu rencana disetujui, Antigravity IDE **tidak** menulis kode file satu per satu secara manual. Sebaliknya, ia memanggil `run_seiza_task` dari MCP server Seiza. Seiza akan menjadwalkan DAG tugas, membagi pekerjaan, dan menjalankan sub-agent secara paralel (coder, planner, reviewer, tester) langsung di backend WSL2 Anda menggunakan model yang diarahkan oleh **9router**.
+### Workflow Option A: IDE Agent + Seiza
 
-### 2. OMP (Oh My Pi) + Seiza Sub-Agent (CLI-First Orchestrator)
-*   **Peran OMP:** Alternatif untuk alur kerja berbasis CLI. OMP bertindak sebagai CLI Orchestration Manager yang membagi tugas-tugas kompleks dan mendelegasikannya ke sub-agent Seiza.
-*   **Peran Seiza:** Seiza melakukan eksekusi kode paralel di bawah kendali OMP, memperbarui database status, dan menulis output yang lengkap serta teruji.
+Your IDE's AI agent (Antigravity IDE, Cursor, Claude Code, etc.) acts as the **project manager** — it understands the request, creates an implementation plan, and gets your approval. Then it delegates the actual coding to **Seiza** via `run_seiza_task`. Seiza splits the work into a DAG of parallel sub-tasks executed by specialized agents (coder, reviewer, planner, tester).
 
----
+### Workflow Option B: OMP + Seiza (CLI-First)
 
-## 🚀 Fitur Unggulan & Keuntungan Environment
-
-Setiap tool dalam environment ini dipilih secara sengaja untuk mengatasi batasan LLM konvensional:
-
-| Nama Tool | Deskripsi & Kegunaan Utama | Keuntungan & Fitur Unggulan |
-| :--- | :--- | :--- |
-| **Seiza Orchestrator** | Sub-agent execution engine dengan skema hub-and-spoke. | Membagi tugas berat menjadi sub-task paralel (Coder, Reviewer, Planner, Tester). Menghindari kepayahan single-agent. |
-| **Amneshia (v2)** | SQLite FTS5 Memory Hub & Knowledge Graph. | Menyimpan data user, preferensi stack, keputusan arsitektur, dan hubungan antar entitas secara permanen lintas sesi pemrograman. |
-| **codebase-memory-mcp** | C-based Codebase Graph Indexer (Tree-Sitter). | Mengubah codebase menjadi struktur graph yang dapat di-query. **Mengurangi konsumsi token agent sebesar 80-95%** dengan menghilangkan scanning file mentah/grep berulang. |
-| **Context7** | Official Library & Framework Documentation Engine. | Mengambil dokumentasi resmi terbaru (React, Next.js, Laravel, Tailwind, dll.) secara real-time. Mencegah agent menulis kode dengan sintaks usang/halusinasi API. |
-| **9router** | Local daemon model router. | Mengarahkan LLM request ke model free/lokal (seperti `gemini-3-flash`) sebagai fallback otomatis sebelum menggunakan model berbayar jika kuota habis. |
-| **Sequential Thinking** | Dynamic multi-step reasoning tool. | Memaksa agent berpikir secara bertahap dan mengevaluasi hipotesis sebelum melakukan penulisan kode atau modifikasi file. |
+**OMP (Oh My Pi)** is a CLI-based orchestrator that does the same thing from the terminal. It decomposes complex tasks and delegates them to Seiza sub-agents. This is useful for headless environments or automation pipelines.
 
 ---
 
-## 🤖 AI-Agent Installation Prompt (Cara Cepat Pasang lewat AI)
+## What's Included
 
-Jika Anda membagikan workspace ini kepada teman Anda yang juga menggunakan AI Agent coding (seperti Claude Code, Cursor, Aider, atau Antigravity IDE), mereka dapat langsung melakukan **copy-paste** prompt di bawah ini ke AI agent mereka untuk proses instalasi instan.
+### Core MCP Servers
 
-> [!TIP]
-> **Salin teks di bawah ini dan berikan ke AI Agent Anda:**
-> ```text
-> Tolong bantu saya mengonfigurasi dan memasang MurtixEnvironment di WSL saya.
-> Saya telah meng-clone repository MurtixEnvironment. Silakan lakukan langkah berikut secara berurutan:
-> 1. Periksa file 'install.sh' di root repository ini untuk memahami alur instalasinya.
-> 2. Periksa apakah dependencies sistem seperti Node.js, npm, dan git sudah terpasang.
-> 3. Jalankan './install.sh' untuk:
->    - Mengunduh codebase-memory-mcp dari DeusData.
->    - Meng-clone dan mem-build Amneshia dan Seiza ke folder ~/projects/.
->    - Menyalin rules/GEMINI.md ke ~/.gemini/GEMINI.md dan rules/SEIZA_RULES.md ke ~/.seiza/RULES.md.
->    - Menggabungkan MCP config baru dari templates/mcp_config.json.template ke ~/.gemini/config/mcp_config.json secara cerdas tanpa menghapus server MCP yang sudah saya miliki.
-> 4. Jika terjadi error path atau perbedaan direktori pada sistem saya, tolong edit install.sh atau jalankan commands manual yang sesuai agar instalasi berhasil.
-> 5. Laporkan hasilnya jika sudah selesai.
-> ```
+| Tool | What It Does | Key Benefit |
+|:---|:---|:---|
+| **[Seiza](https://github.com/SabilMurti/Seiza)** | Hub-and-spoke sub-agent orchestrator | Splits heavy tasks into parallel sub-agents (coder, reviewer, planner, tester). Eliminates single-agent bottlenecks. |
+| **[Amneshia](https://github.com/SabilMurti/Amneshia)** | SQLite FTS5 long-term memory & knowledge graph | Persists user preferences, architectural decisions, project context, and entity relationships across all sessions. 18 MCP tools. |
+| **[codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp)** | Tree-Sitter codebase knowledge graph | Indexes your entire codebase into a queryable graph. **Reduces agent token consumption by 80–95%** vs. raw file scanning. Single static C binary, zero dependencies. |
+| **[Context7](https://context7.com)** | Live official documentation engine | Fetches the latest docs for React, Next.js, Laravel, Tailwind, etc. in real-time. Prevents hallucinated API calls and outdated syntax. |
+| **[Sequential Thinking](https://github.com/modelcontextprotocol/servers/tree/main/src/sequentialthinking)** | Multi-step reasoning tool | Forces the agent to think step-by-step, evaluate hypotheses, and plan before writing code. |
+
+### Also Included (Optional)
+
+| Tool | What It Does |
+|:---|:---|
+| **OMP (Oh My Pi)** | CLI-based parallel execution orchestrator (alternative to IDE-based planning) |
+| **9router** | Local model router daemon — automatically routes LLM requests to free models (e.g. `gemini-3-flash`) as fallback before using paid models |
+| **GitHub MCP Server** | GitHub API integration (issues, PRs, file operations) via MCP |
+| **ESLint MCP** | Real-time linting integration |
+
+### Agent Rules & Directives
+
+| File | Purpose |
+|:---|:---|
+| `rules/GEMINI.md` | Core directives for the planning-layer agent (Antigravity IDE / Gemini). Defines the full MCP-first workflow, security standards, professional engineering standards, and fallback model handling. |
+| `rules/SEIZA_RULES.md` | Directives for Seiza sub-agents. Enforces MCP-first code discovery, zero-placeholder policy, library-over-reinvention, and security-by-default. |
 
 ---
 
-## 🛠️ Panduan Instalasi Manual (Langkah demi Langkah)
+## Quick Install (Let Your AI Do It)
 
-Jika Anda ingin menginstalnya secara mandiri via Terminal WSL2:
+The fastest way to set this up on a new machine is to let your AI coding agent handle it.
 
-### 1. Persiapan
-Pastikan sistem WSL2 Anda memiliki:
-*   **Node.js** (versi >= 18)
-*   **npm**
-*   **git**
-*   **curl**
+👉 **[Read the full AI Installation Prompt →](./INSTALL_PROMPT.md)**
 
-### 2. Jalankan Installer Script
-Masuk ke direktori repository dan jalankan:
+Copy the prompt from that file and paste it into your AI agent. It will:
+1. Clone this repo
+2. Install all dependencies (codebase-memory-mcp, Amneshia, Seiza)
+3. Detect where your IDE stores its MCP config and update it automatically
+4. Copy the agent rule files to the correct locations
+5. Handle any path differences or errors on your specific system
+
+---
+
+## Manual Install
+
+### Prerequisites
+
+- **WSL2 / Ubuntu** (or any Linux environment)
+- **Node.js** >= 18
+- **npm**, **git**, **curl**
+
+### Steps
+
 ```bash
+# 1. Clone the repo
+git clone https://github.com/SabilMurti/MurtixEnvironment.git
+cd MurtixEnvironment
+
+# 2. Run the installer
 chmod +x install.sh
 ./install.sh
 ```
 
-Script akan memandu Anda untuk:
-1. Memeriksa ketersediaan perintah `node`, `npm`, dan `git`.
-2. Mengunduh biner `codebase-memory-mcp` (jika belum ada) ke `~/.local/bin/`.
-3. Meng-clone repositori `Amneshia` dan `Seiza` dari akun GitHub **SabilMurti**, mem-build-nya, dan melakukan registrasi global.
-4. Menyalin instruksi/rules agen (`GEMINI.md` dan `RULES.md`).
-5. Meminta `Context7 API Key` dan `GitHub Personal Access Token` (opsional, tekan Enter untuk melewatinya).
-6. Melakukan *smart merge* terhadap file `~/.gemini/config/mcp_config.json` agar server MCP yang sudah ada di PC Anda tidak hilang.
+The installer will:
+
+1. **Check prerequisites** — verifies `node`, `npm`, `git` are available and detects paths automatically.
+2. **Install codebase-memory-mcp** — downloads the static binary from [DeusData's official installer](https://github.com/DeusData/codebase-memory-mcp) to `~/.local/bin/`.
+3. **Clone & build Amneshia** — from `https://github.com/SabilMurti/Amneshia.git` into `~/projects/Amneshia`, runs `npm install && npm run build`, and registers the global binary.
+4. **Clone & build Seiza** — from `https://github.com/SabilMurti/Seiza.git` into `~/projects/Seiza`, runs `npm install && npm run build`, and registers the global binary.
+5. **Copy agent rules** — places `GEMINI.md` into `~/.gemini/` and `SEIZA_RULES.md` into `~/.seiza/`.
+6. **Configure MCP** — reads `templates/mcp_config.json.template`, substitutes your system paths, and performs a **smart merge** into `~/.gemini/config/mcp_config.json` (preserving any existing MCP servers you already have configured).
+
+### Post-Install: MCP Bridge Setup
+
+After installation, Amneshia and Seiza support **MCP Bridge** connections to `codebase-memory-mcp`. This allows:
+- **Amneshia** to store codebase structural metadata in its long-term memory graph.
+- **Seiza** sub-agents to query code structure directly via bridged tools instead of scanning files.
+
+The bridge is configured automatically when the tools detect each other in the MCP config.
 
 ---
 
-## ⚙️ Cara Menghubungkan MCP via Bridge (Amneshia & Seiza)
+## Repository Structure
 
-Seiza dan Amneshia mendukung fitur **MCP Bridge**. Setelah instalasi selesai:
-*   **Amneshia** dapat menjembatani data dari `codebase-memory-mcp` untuk menyimpan metadata struktur codebase ke dalam long-term memory graph-nya.
-*   **Seiza** secara otomatis mendelegasikan perintah penemuan kode kepada `codebase-memory-mcp` menggunakan bridge tool yang tersedia.
-
-Pastikan path `codebase-memory-mcp` di `~/.gemini/config/mcp_config.json` menunjuk ke lokasi biner yang valid (default: `~/.local/bin/codebase-memory-mcp`).
+```
+MurtixEnvironment/
+├── README.md                               # This file
+├── INSTALL_PROMPT.md                       # AI agent installation prompt
+├── install.sh                              # Automated installer script
+├── rules/
+│   ├── GEMINI.md                           # Antigravity IDE agent directives
+│   └── SEIZA_RULES.md                      # Seiza sub-agent directives
+└── templates/
+    └── mcp_config.json.template            # Parameterized MCP config template
+```
 
 ---
 
-*Dibuat dengan 🧠 dan ⚡ untuk efisiensi pemrograman tingkat lanjut oleh Sabil Murti.*
+## Customization
+
+The `install.sh` script is designed to be **readable and editable by AI agents**. If something doesn't work on your system:
+- Ask your AI agent to read the script, understand the issue, and fix it.
+- All configurable paths are at the top of the script as shell variables.
+- The MCP config template uses simple `{{PLACEHOLDER}}` syntax that can be adapted for any path layout.
+
+---
+
+*Built by [Murtix](https://github.com/SabilMurti) — for efficient, agentic development.*
