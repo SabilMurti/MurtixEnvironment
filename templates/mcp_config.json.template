@@ -1,0 +1,123 @@
+{
+  "mcpServers": {
+    "context7": {
+      "serverUrl": "https://mcp.context7.com/mcp",
+      "headers": {
+        "CONTEXT7_API_KEY": "{{CONTEXT7_API_KEY}}"
+      }
+    },
+    "sequential-thinking": {
+      "command": "wsl.exe",
+      "args": [
+        "-e",
+        "env",
+        "PATH={{NODE_BIN_DIR}}:/usr/bin:/bin",
+        "{{NODE_BIN_DIR}}/npx",
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ]
+    },
+    "filesystem": {
+      "command": "wsl.exe",
+      "args": [
+        "-e",
+        "env",
+        "PATH={{NODE_BIN_DIR}}:/usr/bin:/bin",
+        "{{NODE_BIN_DIR}}/mcp-server-filesystem",
+        "{{USER_HOME}}/projects",
+        "{{USER_HOME}}"
+      ]
+    },
+    "github-mcp-server": {
+      "command": "wsl.exe",
+      "args": [
+        "-e",
+        "env",
+        "GITHUB_PERSONAL_ACCESS_TOKEN={{GITHUB_PERSONAL_ACCESS_TOKEN}}",
+        "PATH={{NODE_BIN_DIR}}:/usr/bin:/bin",
+        "{{NODE_BIN_DIR}}/npx",
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ]
+    },
+    "context-mode": {
+      "command": "wsl.exe",
+      "args": [
+        "-e",
+        "env",
+        "PATH={{NODE_BIN_DIR}}:/usr/bin:/bin",
+        "{{NODE_BIN_DIR}}/context-mode"
+      ]
+    },
+    "codebase-memory-mcp": {
+      "command": "wsl.exe",
+      "args": [
+        "-e",
+        "{{USER_HOME}}/.local/bin/codebase-memory-mcp"
+      ]
+    },
+    "eslint": {
+      "command": "wsl.exe",
+      "args": [
+        "-e",
+        "env",
+        "PATH={{NODE_BIN_DIR}}:/usr/bin:/bin",
+        "{{NODE_BIN_DIR}}/npx",
+        "-y",
+        "@eslint/mcp"
+      ],
+      "disabled": true
+    },
+    "pinchtab": {
+      "command": "wsl.exe",
+      "args": [
+        "-e",
+        "env",
+        "PATH={{NODE_BIN_DIR}}:/usr/bin:/bin",
+        "{{NODE_BIN_DIR}}/pinchtab",
+        "mcp"
+      ],
+      "disabled": true
+    },
+    "omp-orchestrator": {
+      "command": "wsl.exe",
+      "args": [
+        "-e",
+        "env",
+        "PATH={{NODE_BIN_DIR}}:/usr/bin:/bin",
+        "{{NODE_BIN_DIR}}/node",
+        "{{USER_HOME}}/.local/bin/omp-mcp-server.js"
+      ],
+      "disabled": true
+    },
+    "personal-memory-mcp": {
+      "command": "wsl.exe",
+      "args": [
+        "-e",
+        "env",
+        "PATH={{NODE_BIN_DIR}}:/usr/bin:/bin",
+        "{{NODE_BIN_DIR}}/node",
+        "{{USER_HOME}}/.local/bin/personal-memory-mcp.js"
+      ],
+      "disabled": true
+    },
+    "amneshia": {
+      "command": "wsl.exe",
+      "args": [
+        "-e",
+        "env",
+        "PATH={{NODE_BIN_DIR}}:/usr/bin:/bin",
+        "{{NODE_BIN_DIR}}/amneshia"
+      ]
+    },
+    "seiza": {
+      "command": "wsl.exe",
+      "args": [
+        "-e",
+        "env",
+        "PATH={{NODE_BIN_DIR}}:/usr/bin:/bin",
+        "{{NODE_BIN_DIR}}/seiza"
+      ]
+    }
+  }
+}
