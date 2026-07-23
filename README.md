@@ -128,6 +128,79 @@ After installation, Amneshia and Seiza support **MCP Bridge** connections to `co
 
 The bridge is configured automatically when the tools detect each other in the MCP config.
 
+## Post-Install Verification
+
+After running `install.sh`, verify everything is working:
+
+```bash
+./verify.sh
+```
+
+Example output when all checks pass:
+
+```
+========================================
+  MurtixEnvironment Health Check
+========================================
+
+✓ codebase-memory-mcp found at ~/.local/bin/codebase-memory-mcp
+✓ Amneshia found at ~/projects/Amneshia/dist/index.js
+✓ Seiza found at ~/projects/Seiza/dist/index.js
+✓ Valid MCP config found at ~/.gemini/config/mcp_config.json
+✓ GEMINI.md found at ~/.gemini/GEMINI.md
+✓ RULES.md found at ~/.seiza/RULES.md
+✓ Node.js v20.11.0 (>= 18)
+
+  Summary: 7 passed, 0 failed
+========================================
+```
+
+---
+
+## Updating
+
+To update all tools to their latest versions, run:
+
+```bash
+./update.sh
+```
+
+This updates Amneshia, Seiza, and codebase-memory-mcp to their latest releases. Run `./verify.sh` afterwards to confirm everything still works.
+
+---
+
+## Troubleshooting
+
+### Node.js version too old
+
+Requires Node.js >= 18. Install a newer version with `fnm`:
+
+```bash
+curl -fsSL https://fnm.vercel.app/install | bash
+fnm install 20 && fnm use 20
+```
+
+### `npm install -g` or `npm link` fails with EACCES
+
+```bash
+npm config set prefix ~/.local
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+### `codebase-memory-mcp` download fails
+
+Download the binary manually from [github.com/DeusData/codebase-memory-mcp/releases](https://github.com/DeusData/codebase-memory-mcp/releases), place it at `~/.local/bin/codebase-memory-mcp`, then run `chmod +x ~/.local/bin/codebase-memory-mcp`.
+
+### MCP config not detected by IDE
+
+Different IDEs store configs in different locations. See [INSTALL_PROMPT.md](./INSTALL_PROMPT.md) for a full list of known paths and how to update each one.
+
+### Amneshia or Seiza MCP server fails to start
+
+1. Check `dist/index.js` exists: `ls ~/projects/Amneshia/dist/index.js`
+2. If missing, rebuild: `cd ~/projects/Amneshia && npm run build`
+3. Verify the Node.js path in your MCP config: `which node` — the path must match what is in the config.
+
 ---
 
 ## Repository Structure
@@ -137,6 +210,11 @@ MurtixEnvironment/
 ├── README.md                               # This file
 ├── INSTALL_PROMPT.md                       # AI agent installation prompt
 ├── install.sh                              # Automated installer script
+├── verify.sh                               # Post-install health-check
+├── update.sh                               # Update all tools to latest
+├── .env.example                            # API keys template
+├── .gitignore
+├── LICENSE                                 # MIT
 ├── rules/
 │   ├── GEMINI.md                           # Antigravity IDE agent directives
 │   └── SEIZA_RULES.md                      # Seiza sub-agent directives
