@@ -29,6 +29,7 @@ if [ -d "${HOME}/projects/Amneshia" ]; then
     npm install
     echo "Rebuilding project..."
     npm run build
+    npm install -g . --ignore-scripts 2>&1 || echo -e "${RED}Non-critical warning: npm global install failed for Amneshia.${NC}"
     echo -e "${GREEN}✓ Amneshia updated and built successfully.${NC}"
     cd - >/dev/null
 else
@@ -51,6 +52,7 @@ if [ -d "${HOME}/projects/Seiza" ]; then
         echo "Building Seiza dashboard..."
         npm run build:all
     fi
+    npm install -g . --ignore-scripts 2>&1 || echo -e "${RED}Non-critical warning: npm global install failed for Seiza.${NC}"
     echo -e "${GREEN}✓ Seiza updated and built successfully.${NC}"
     cd - >/dev/null
 else
